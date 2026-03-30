@@ -168,6 +168,11 @@ def unsafe_execute(
         os.chdir = chdir
 
 
+# Factor applied to ground-truth execution time to set per-task timeout.
+# E.g. if GT takes 0.5s and multiplier is 10, timeout = max(min_time_limit, 5.0).
+GT_TIMEOUT_MULTIPLIER = float(os.getenv("BIGCODEBENCH_GT_TIMEOUT_MULTIPLIER", 10))
+
+
 def untrusted_check(
     code: str,
     test_code: str,
@@ -178,8 +183,9 @@ def untrusted_check(
     min_time_limit: float = 10,
     gt_time_limit: float = 60
 ) -> Tuple[str, np.ndarray]:
-    min_time_limit = max(min_time_limit, gt_time_limit)
-    timeout = max(os.getenv("BIGCODEBENCH_TIMEOUT_PER_TASK", TIMEOUT_LIMIT), min_time_limit) + 1
+    hard_ceiling = float(os.getenv("BIGCODEBENCH_TIMEOUT_PER_TASK", TIMEOUT_LIMIT))
+    calibrated_limit = max(min_time_limit, gt_time_limit * GT_TIMEOUT_MULTIPLIER)
+    timeout = min(calibrated_limit, hard_ceiling) + 1
     # shared memory objects
     stat = Value("i", _UNKNOWN)
     manager = Manager()

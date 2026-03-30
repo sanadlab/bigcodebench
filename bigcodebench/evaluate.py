@@ -53,7 +53,7 @@ def get_groundtruth(n_workers, problems, hashcode, check_gt_only, max_as_limit, 
     print("\nAsserting the groundtruth...")
     tbegin = time.time()
     
-    with ProcessPoolExecutor(max_workers=n_workers) as executor:
+    with ProcessPoolExecutor(max_workers=n_workers, mp_context=multiprocessing.get_context("spawn")) as executor:
         futures = []
         n_samples = 0
         expected_time = dict()
@@ -145,6 +145,9 @@ def evaluate(
     if no_execute:
         return
     
+    if check_gt_only:
+        samples = "__dummy__.jsonl"
+    
     assert samples is not None, "No samples provided"
         
     if os.path.isdir(samples):
@@ -235,10 +238,6 @@ def evaluate(
         else:
             n_workers = parallel
 
-        if check_gt_only:
-            # bypass the samples
-            samples = "__dummy__.jsonl"
-
         problems = get_bigcodebench(subset=subset)
         
         # Add selective evaluation logic
@@ -282,7 +281,7 @@ def evaluate(
                     "eval": {},
                 }
 
-                with ProcessPoolExecutor(max_workers=n_workers) as executor:
+                with ProcessPoolExecutor(max_workers=n_workers, mp_context=multiprocessing.get_context("spawn")) as executor:
                     futures = []
                     completion_id = Counter()
                     n_samples = 0

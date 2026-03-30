@@ -102,7 +102,8 @@ def trusted_check(
     max_stack_limit: float,
     min_time_limit: float = 10,
 ):
-    timeout = max(os.getenv("BIGCODEBENCH_TIMEOUT_PER_TASK", TIMEOUT_LIMIT), min_time_limit) + 1
+    hard_ceiling = float(os.getenv("BIGCODEBENCH_TIMEOUT_PER_TASK", TIMEOUT_LIMIT))
+    timeout = max(hard_ceiling, min_time_limit) + 1
     # shared memory objects
     times = Value("d", -1)
     manager = Manager()
